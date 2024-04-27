@@ -17,7 +17,7 @@ app.post('/tasks', (request: Request, response: Response) => {
     const { name } = request.body as RequestBody
     const task = new Task(name)
     tasks.push(task)
-    return response.status(201).json({message: "Tarefa criada com sucesso"})
+    return response.status(201).json({ message: "Tarefa criada com sucesso" })
 });
 
 app.get('/tasks/:id', (request: Request, response: Response) => {
@@ -25,7 +25,7 @@ app.get('/tasks/:id', (request: Request, response: Response) => {
     const task = tasks.find((item) => item.id === id)
 
     if (typeof task === 'undefined') {
-        return response.status(404).json({message: "Tarefa não encontrada"}) 
+        return response.status(404).json({ message: "Tarefa não encontrada" })
     }
 
     return response.status(200).json({ task })
@@ -33,25 +33,32 @@ app.get('/tasks/:id', (request: Request, response: Response) => {
 
 
 app.get('/tasks', (request: Request, response: Response) => {
-    return response.status(200).json({tasks})
+    return response.status(200).json({ tasks })
 });
 
 
 app.put('/tasks/:id', (request: Request, response: Response) => {
     const { id } = request.params
+    const { name } = request.body
 
-    task = tasks.find((item) => item.id === id)
+    const task = tasks.find((item) => item.id === id)
 
-    
+    if (typeof task === 'undefined') {
+        return response.status(404).json({ message: "Tarefa não encontrada" })
+    }
+
+    task.name = name
+
+    return response.status(200).json({ message: "Tarefa editada com sucesso" })
 });
 
 
 app.delete('/tasks/:id', (request: Request, response: Response) => {
     const { id } = request.params
     tasks = tasks.filter((item) => item.id !== id)
-    return response.status(204).json({message: "Tarefa excluída com sucesso!"})
+    return response.status(200).json({ message: "Tarefa excluída com sucesso!" })
 });
 
 app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta em http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
