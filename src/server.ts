@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express'
 import { Task } from './models/Task'
 import { createDbConnection } from './config/database'
+import { TaskRepository } from './repositories/task.repository'
 
 interface RequestBody {
     name: string
@@ -16,36 +17,29 @@ let tasks: Task[] = []
 
 const db = createDbConnection()
 
+const taskRepository = new TaskRepository(db)
+
 app.post('/tasks', (request: Request, response: Response) => {
     try {
         const { name } = request.body as RequestBody
         const task = new Task(name)
         tasks.push(task)
 
-        db.run(`INSERT INTO tasks(id, name) values (?, ?)`, [task.id, task.name], (err: Error) => {
-            if (err) {
-                return response.status(500).json({ message: err.message })
-            }
-            return response.status(201).json({ message: "Tarefa criada com sucesso" })
-        })
-
+        taskRepository.insert(task)
     } catch (error) {
         return response.status(500).json({ message: "Houve um erro inesperado" })
     }
 });
 
-app.get('/tasks/:id', (request: Request, response: Response) => {
+app.get('/tasks/:id', async (request: Request, response: Response) => {
     try {
         const { id } = request.params
 
-        const task = db.get('SELECT * FROM tasks WHERE ')
-        
+        const task = await taskRepository.findOne(id)
 
-        // const task = tasks.find((item) => item.id === id)
-
-        // if (typeof task === 'undefined') {
-        //     return response.status(404).json({ message: "Tarefa não encontrada" })
-        // }
+        if (typeof task === 'undefined') {
+            return response.status(404).send()
+        }
 
         return response.status(200).json({ task })
     } catch (error) {
@@ -55,12 +49,10 @@ app.get('/tasks/:id', (request: Request, response: Response) => {
 });
 
 
-app.get('/tasks', (request: Request, response: Response) => {
+app.get('/tasks', async (request: Request, response: Response) => {
     try {
-        const tasks = db.get('SELECT * FROM tasks')
-
-        console.log(tasks.each)
-
+        const tasks = await taskRepository.findAll()
+        
         return response.status(200).json({ tasks })
     } catch (error) {
         return response.status(500).json({ message: "Houve um erro inesperado" })
@@ -73,15 +65,14 @@ app.put('/tasks/:id', (request: Request, response: Response) => {
         const { id } = request.params
         const { name } = request.body
 
-        const task = tasks.find((item) => item.id === id)
-
-        if (typeof task === 'undefined') {
-            return response.status(404).json({ message: "Tarefa não encontrada" })
+        const task: Task = {
+            id,
+            name
         }
 
-        task.name = name
+        taskRepository.update(task)
 
-        return response.status(200).json({ message: "Tarefa editada com sucesso" })
+        return response.status(204).send()
     } catch (error) {
         return response.status(500).json({ message: "Houve um erro inesperado" })
     }
@@ -91,8 +82,8 @@ app.put('/tasks/:id', (request: Request, response: Response) => {
 app.delete('/tasks/:id', (request: Request, response: Response) => {
     try {
         const { id } = request.params
-        tasks = tasks.filter((item) => item.id !== id)
-        return response.status(200).json({ message: "Tarefa excluída com sucesso!" })
+        taskRepository.delete(id)
+        return response.status(204).send()
     } catch (error) {
         return response.status(500).json({ message: "Houve um erro inesperado" })
     }
