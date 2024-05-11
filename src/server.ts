@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express'
 import { Task } from './models/Task'
 import { createDbConnection } from './config/database'
 import { TaskRepository } from './repositories/task.repository'
+import cors from "cors"
 
 interface RequestBody {
     name: string
@@ -10,6 +11,8 @@ interface RequestBody {
 const app = express()
 
 app.use(express.json())
+
+app.use(cors())
 
 const PORT = 3333
 
@@ -23,9 +26,10 @@ app.post('/tasks', (request: Request, response: Response) => {
     try {
         const { name } = request.body as RequestBody
         const task = new Task(name)
-        tasks.push(task)
-
+    
         taskRepository.insert(task)
+
+        return response.status(201).json(task)
     } catch (error) {
         return response.status(500).json({ message: "Houve um erro inesperado" })
     }

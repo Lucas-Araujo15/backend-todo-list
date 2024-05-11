@@ -58,7 +58,6 @@ export class TaskRepository {
                 let obj = {} as Task;
 
                 query.all((err, rows: Task[]) => {
-                    console.log(typeof rows)
                     if (typeof rows[0] !== 'undefined') {
                         obj.id = rows[0].id
                         obj.name = rows[0].name
